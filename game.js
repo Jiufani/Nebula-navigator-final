@@ -2,7 +2,7 @@
   ════════════════════════════════════════════════════════════
   Nebula Navigator — game.js
   Author : Giovanni Castelblanco
-  Course : ICS3U — Introduction to Computer Science
+  Course : DIG 2500- Introductions to interactive media
 
   Description:
     Standalone vanilla-JS game. All game logic lives here;
