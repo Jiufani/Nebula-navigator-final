@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nebula Navigator</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Orbitron: retro-futuristic typeface used throughout the UI -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════
+       GAME CANVAS — all gameplay is drawn here
+  ════════════════════════════════════════════ -->
+  <canvas id="gameCanvas" role="img" aria-label="Nebula Navigator game area"></canvas>
+
+  <!-- ════════════════════════════════════════════
+       HUD — shown only during active gameplay
+       Contains: fuel bar, countdown timer, level, score
+  ════════════════════════════════════════════ -->
+  <div id="hud" class="hidden" role="status" aria-live="polite" aria-label="Game status">
+
+    <!-- Left: Fuel indicator -->
+    <div id="hud-left">
+      <span class="hud-label" id="fuel-label">FUEL</span>
+      <div id="fuel-bar-bg" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-labelledby="fuel-label">
+        <div id="fuel-bar"></div>
+      </div>
+      <!-- Low-fuel warning — toggled by JS when fuel drops below 30% -->
+      <span id="low-fuel-warning" class="low-fuel-warn hidden" aria-live="assertive">⚠ LOW FUEL</span>
+    </div>
+
+    <!-- Center: Countdown timer -->
+    <div id="hud-center">
+      <div id="timer" aria-label="Time remaining">60</div>
+      <div class="hud-label">WARP SYNC</div>
+    </div>
+
+    <!-- Right: Level and score -->
+    <div id="hud-right">
+      <div id="level-display" aria-label="Current level">LEVEL 01</div>
+      <div id="score-display" aria-label="Current score">00000</div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MOBILE TOUCH CONTROLS
+       Shown only on small screens (CSS media query)
+  ════════════════════════════════════════════ -->
+  <div id="mobile-controls" class="hidden" role="group" aria-label="Touch movement controls">
+    <button id="btn-down" class="touch-btn" aria-label="Move ship down">&#9660;</button>
+    <button id="btn-up"   class="touch-btn" aria-label="Move ship up">&#9650;</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       SCREEN: TITLE
+  ════════════════════════════════════════════ -->
+  <div id="screen-title" class="screen" role="main">
+    <div class="screen-content">
+      <h1 id="game-title">NEBULA<br/>NAVIGATOR</h1>
+      <p class="subtitle">SURVIVE THE ASTEROID FIELD</p>
+      <p class="high-score-display">HIGH SCORE: <span id="title-highscore">00000</span></p>
+
+      <!-- Quick-reference controls summary so players don't have to open Mission Briefing -->
+      <div class="quick-controls" aria-label="Quick controls reference">
+        <span>&#9650; / W &nbsp;=&nbsp; UP</span>
+        <span class="qc-divider">|</span>
+        <span>&#9660; / S &nbsp;=&nbsp; DOWN</span>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn-primary" id="btn-start">INITIALIZE ENGINE</button>
+        <button class="btn-secondary" id="btn-instructions">MISSION BRIEFING</button>
+        <button class="btn-ghost" id="btn-credits">CREDITS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       SCREEN: INSTRUCTIONS / MISSION BRIEFING
+  ════════════════════════════════════════════ -->
+  <div id="screen-instructions" class="screen hidden" role="dialog" aria-labelledby="instr-heading" aria-modal="true">
+    <div class="screen-content">
+      <div class="panel">
+        <h2 class="panel-title" id="instr-heading">MISSION BRIEFING</h2>
+
+        <!-- Player goal -->
+        <p class="instr-goal">Survive the asteroid field for <strong>60 seconds</strong> until the Warp Gate opens, then ride the warp stream to safety.</p>
+
+        <!-- Controls and rules list -->
+        <ol class="instructions-list" aria-label="Game rules">
+          <li><span class="num" aria-hidden="true">1.</span> Press <strong>↑ / W</strong> to thrust up, <strong>↓ / S</strong> to thrust down.</li>
+          <li><span class="num" aria-hidden="true">2.</span> Every move burns <strong>fuel</strong>. If your fuel hits zero, your ship is stranded — game over.</li>
+          <li><span class="num" aria-hidden="true">3.</span> Dodge all asteroids. One hit destroys your ship.</li>
+          <li><span class="num" aria-hidden="true">4.</span> Difficulty and asteroid speed increase every 10 seconds.</li>
+          <li><span class="num" aria-hidden="true">5.</span> Score points for every asteroid you pass. Higher levels earn a score multiplier.</li>
+        </ol>
+
+        <button class="btn-secondary" id="btn-acknowledge">ACKNOWLEDGED — RETURN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       SCREEN: WIN / WARP GATE REACHED
+  ════════════════════════════════════════════ -->
+  <div id="screen-win" class="screen hidden" role="dialog" aria-labelledby="win-heading" aria-modal="true">
+    <div class="screen-content">
+      <h2 class="result-title win" id="win-heading">WARP GATE<br/>REACHED</h2>
+      <div class="divider" role="separator"></div>
+      <div class="stats-grid" aria-label="Round statistics">
+        <div class="stat">
+          <span class="stat-label">SURVIVAL TIME</span>
+          <span class="stat-value" id="win-time">0.0s</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">FINAL SCORE</span>
+          <span class="stat-value" id="win-score">0</span>
+        </div>
+      </div>
+      <div id="win-highscore-msg" class="new-highscore hidden" role="alert">★ NEW HIGH SCORE! ★</div>
+      <div class="btn-group">
+        <button class="btn-primary" id="btn-win-again">PLAY AGAIN</button>
+        <button class="btn-ghost"   id="btn-win-title">RETURN TO TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       SCREEN: LOSE / SHIP DESTROYED
+  ════════════════════════════════════════════ -->
+  <div id="screen-lose" class="screen hidden" role="dialog" aria-labelledby="lose-heading" aria-modal="true">
+    <div class="screen-content">
+      <h2 class="result-title lose" id="lose-heading">SHIP<br/>DESTROYED</h2>
+      <div class="divider" role="separator"></div>
+      <div class="stats-grid" aria-label="Round statistics">
+        <div class="stat">
+          <span class="stat-label">SURVIVAL TIME</span>
+          <span class="stat-value" id="lose-time">0.0s</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">FINAL SCORE</span>
+          <span class="stat-value" id="lose-score">0</span>
+        </div>
+      </div>
+      <div id="lose-highscore-msg" class="new-highscore hidden" role="alert">★ NEW HIGH SCORE! ★</div>
+      <div class="btn-group">
+        <button class="btn-primary" id="btn-lose-again">PLAY AGAIN</button>
+        <button class="btn-ghost"   id="btn-lose-title">RETURN TO TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       SCREEN: CREDITS
+  ════════════════════════════════════════════ -->
+  <div id="screen-credits" class="screen hidden" role="dialog" aria-labelledby="credits-heading" aria-modal="true">
+    <div class="screen-content">
+      <div class="panel">
+        <h2 class="panel-title" id="credits-heading">CREDITS</h2>
+
+        <dl class="credits-list">
+          <dt>Game</dt>
+          <dd>Nebula Navigator</dd>
+
+          <dt>Developer</dt>
+          <dd>Giovanni Castelblanco</dd>
+
+          <dt>School Project</dt>
+          <dd>DIG 2500 — Fundamentals of Interactive Design</dd>
+
+          <dt>Built With</dt>
+          <dd>HTML5 Canvas &amp; Vanilla JavaScript</dd>
+
+          <dt>Typography</dt>
+          <dd>
+            <a href="https://fonts.google.com/specimen/Orbitron" target="_blank" rel="noopener noreferrer">
+              Orbitron
+            </a> by Matt McInerney, via Google Fonts
+          </dd>
+
+          <dt>Inspiration</dt>
+          <dd>Classic arcade bullet-dodge games</dd>
+
+          <dt>Version</dt>
+          <dd>1.0 — 2026</dd>
+        </dl>
+
+        <button class="btn-secondary" id="btn-credits-back">RETURN TO TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- External game logic — loaded last so DOM is fully available -->
+  <script src="game.js"></script>
+
+</body>
+</html>
