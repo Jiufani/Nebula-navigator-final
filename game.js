@@ -1,13 +1,7 @@
 /*
   ════════════════════════════════════════════════════════════
-  Nebula Navigator — game.js
   Author : Giovanni Castelblanco
   Course : DIG 2500- Introductions to interactive media
-
-  Description:
-    Standalone vanilla-JS game. All game logic lives here;
-    the HTML file provides the canvas, HUD, and screen divs,
-    and style.css handles all visual presentation.
 
   Sections:
     A. Constants
